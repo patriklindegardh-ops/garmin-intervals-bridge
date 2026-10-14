@@ -13,7 +13,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install dependencies
-        run: pip install garmin-intervals-bridge garth
+        run: pip install garmin-intervals-bridge
 
       - name: Generate Garth Session
         env:
@@ -22,16 +22,17 @@ jobs:
           GARMIN_MFA_CODE: ${{ secrets.GARMIN_MFA_CODE }}
         run: |
           python -c "
-          import os, garth
+          import os, sys, garth
           username = os.environ['GARMIN_USERNAME']
           password = os.environ['GARMIN_PASSWORD']
-          mfa = os.environ.get('GARMIN_MFA_CODE', '')
-          
-          if mfa:
-              garth.login(username, password, mfa_token=mfa)
-          else:
-              garth.login(username, password)
-          
+          mfa = os.environ.get('GARMIN_MFA_CODE', '').strip()
+
+          def prompt_mfa():
+              if mfa:
+                  return mfa
+              raise Exception('No MFA code provided in GARMIN_MFA_CODE secret!')
+
+          garth.login(username, password, prompt_mfa=prompt_mfa)
           garth.save('/tmp/garth_session')
           "
           echo "--- GARMIN TOKEN BELOW THIS LINE ---"
