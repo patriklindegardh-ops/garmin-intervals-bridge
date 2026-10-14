@@ -1,0 +1,40 @@
+name: Generate Garmin Token
+
+on:
+  workflow_dispatch:
+
+jobs:
+  get-token:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install garmin-intervals-bridge garth
+
+      - name: Generate Garth Session
+        env:
+          GARMIN_USERNAME: ${{ secrets.GARMIN_USERNAME }}
+          GARMIN_PASSWORD: ${{ secrets.GARMIN_PASSWORD }}
+          GARMIN_MFA_CODE: ${{ secrets.GARMIN_MFA_CODE }}
+        run: |
+          python -c "
+          import os, garth
+          username = os.environ['GARMIN_USERNAME']
+          password = os.environ['GARMIN_PASSWORD']
+          mfa = os.environ.get('GARMIN_MFA_CODE', '')
+          
+          if mfa:
+              garth.login(username, password, mfa_token=mfa)
+          else:
+              garth.login(username, password)
+          
+          garth.save('/tmp/garth_session')
+          "
+          echo "--- GARMIN TOKEN BELOW THIS LINE ---"
+          tar -czf - -C /tmp/garth_session . | base64 -w 0
+          echo ""
+          echo "--- END OF GARMIN TOKEN ---"
