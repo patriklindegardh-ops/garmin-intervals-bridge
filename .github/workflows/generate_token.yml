@@ -13,7 +13,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install dependencies
-        run: pip install garminconnect
+        run: pip install garth
 
       - name: Generate Session Token
         env:
@@ -22,20 +22,22 @@ jobs:
           GARMIN_MFA_CODE: ${{ secrets.GARMIN_MFA_CODE }}
         run: |
           python -c "
-          import os, json, base64
-          from garminconnect import Garmin
+          import os, base64, io, tarfile, garth
 
           email = os.environ['GARMIN_USERNAME']
           password = os.environ['GARMIN_PASSWORD']
           mfa = os.environ.get('GARMIN_MFA_CODE', '').strip()
 
-          client = Garmin(email, password, prompt_mfa=lambda: mfa)
-          client.login()
+          def mfa_handler():
+              if mfa:
+                  return mfa
+              raise Exception('No MFA code set in GARMIN_MFA_CODE secret!')
 
-          token_dir = os.path.expanduser('~/.garminconnect')
-          client.garth.dump(token_dir)
+          garth.login(email, password, prompt_mfa=mfa_handler)
+          
+          token_dir = '/tmp/garth_session'
+          garth.save(token_dir)
 
-          import io, tarfile
           buf = io.BytesIO()
           with tarfile.open(fileobj=buf, mode='w:gz') as tar:
               tar.add(token_dir, arcname='.')
