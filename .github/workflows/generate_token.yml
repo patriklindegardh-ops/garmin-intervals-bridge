@@ -29,13 +29,9 @@ jobs:
           password = os.environ['GARMIN_PASSWORD']
           mfa = os.environ.get('GARMIN_MFA_CODE', '').strip()
 
-          client = Garmin(email, password)
-          if mfa:
-              client.login(mfa_token=mfa)
-          else:
-              client.login()
+          client = Garmin(email, password, prompt_mfa=lambda: mfa)
+          client.login()
 
-          # Spara sessionen till osynlig mapp
           token_dir = os.path.expanduser('~/.garminconnect')
           client.garth.dump(token_dir)
 
