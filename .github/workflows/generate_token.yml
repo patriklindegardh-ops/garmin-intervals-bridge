@@ -13,30 +13,39 @@ jobs:
           python-version: '3.12'
 
       - name: Install dependencies
-        run: pip install garmin-intervals-bridge garth
-        
+        run: pip install garminconnect
 
-      - name: Generate Garth Session
+      - name: Generate Session Token
         env:
           GARMIN_USERNAME: ${{ secrets.GARMIN_USERNAME }}
           GARMIN_PASSWORD: ${{ secrets.GARMIN_PASSWORD }}
           GARMIN_MFA_CODE: ${{ secrets.GARMIN_MFA_CODE }}
         run: |
           python -c "
-          import os, sys, garth
-          username = os.environ['GARMIN_USERNAME']
+          import os, json, base64
+          from garminconnect import Garmin
+
+          email = os.environ['GARMIN_USERNAME']
           password = os.environ['GARMIN_PASSWORD']
           mfa = os.environ.get('GARMIN_MFA_CODE', '').strip()
 
-          def prompt_mfa():
-              if mfa:
-                  return mfa
-              raise Exception('No MFA code provided in GARMIN_MFA_CODE secret!')
+          client = Garmin(email, password)
+          if mfa:
+              client.login(mfa_token=mfa)
+          else:
+              client.login()
 
-          garth.login(username, password, prompt_mfa=prompt_mfa)
-          garth.save('/tmp/garth_session')
+          # Spara sessionen till osynlig mapp
+          token_dir = os.path.expanduser('~/.garminconnect')
+          client.garth.dump(token_dir)
+
+          import io, tarfile
+          buf = io.BytesIO()
+          with tarfile.open(fileobj=buf, mode='w:gz') as tar:
+              tar.add(token_dir, arcname='.')
+          
+          token_b64 = base64.b64encode(buf.getvalue()).decode('utf-8')
+          print('--- GARMIN TOKEN BELOW THIS LINE ---')
+          print(token_b64)
+          print('--- END OF GARMIN TOKEN ---')
           "
-          echo "--- GARMIN TOKEN BELOW THIS LINE ---"
-          tar -czf - -C /tmp/garth_session . | base64 -w 0
-          echo ""
-          echo "--- END OF GARMIN TOKEN ---"
