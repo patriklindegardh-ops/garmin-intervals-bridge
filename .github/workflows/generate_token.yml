@@ -13,7 +13,8 @@ jobs:
           python-version: '3.12'
 
       - name: Install dependencies
-        run: pip install garmin-intervals-bridge
+        run: pip install garmin-intervals-bridge garth
+        
 
       - name: Generate Garth Session
         env:
