@@ -2,9 +2,7 @@ name: Sync Garmin to Intervals
 
 on:
   schedule:
-    # Körd automatisk varje timme
     - cron: '0 * * * *'
-  # Tillåter manuell start
   workflow_dispatch:
 
 jobs:
@@ -36,4 +34,4 @@ jobs:
           INTERVALS_ATHLETE_ID: ${{ secrets.INTERVALS_ATHLETE_ID }}
           INTERVALS_API_KEY: ${{ secrets.INTERVALS_API_KEY }}
         run: |
-          garmin-intervals-bridge sync --days 180
+          garmin-intervals-bridge --days 30
