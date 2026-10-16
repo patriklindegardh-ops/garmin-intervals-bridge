@@ -34,4 +34,4 @@ jobs:
           INTERVALS_ATHLETE_ID: ${{ secrets.INTERVALS_ATHLETE_ID }}
           INTERVALS_API_KEY: ${{ secrets.INTERVALS_API_KEY }}
         run: |
-          garmin-intervals-bridge run
+          garmin-intervals-bridge run --apply
