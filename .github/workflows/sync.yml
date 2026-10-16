@@ -2,9 +2,9 @@ name: Sync Garmin to Intervals
 
 on:
   schedule:
-    # Runs every hour automatically
+    # Körd automatisk varje timme
     - cron: '0 * * * *'
-  # Allows you to manually trigger the sync anytime
+  # Tillåter manuell start
   workflow_dispatch:
 
 jobs:
@@ -24,12 +24,16 @@ jobs:
           python -m pip install --upgrade pip
           pip install garmin-intervals-bridge
 
+      - name: Restore Garmin Session Tokens
+        env:
+          GARMIN_TOKENS: ${{ secrets.GARMIN_TOKENS }}
+        run: |
+          mkdir -p ~/.garth
+          echo "$GARMIN_TOKENS" | base64 -d | tar -xz -C ~/.garth
+
       - name: Run Bridge Sync
         env:
-          GARMIN_USERNAME: ${{ secrets.GARMIN_USERNAME }}
-          GARMIN_PASSWORD: ${{ secrets.GARMIN_PASSWORD }}
-          GARMIN_MFA_CODE: ${{ secrets.GARMIN_MFA_CODE }}
           INTERVALS_ATHLETE_ID: ${{ secrets.INTERVALS_ATHLETE_ID }}
           INTERVALS_API_KEY: ${{ secrets.INTERVALS_API_KEY }}
         run: |
-          garmin-intervals-bridge run --apply
+          garmin-intervals-bridge sync --days 180
